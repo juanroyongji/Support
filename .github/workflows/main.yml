@@ -1,13 +1,10 @@
-name: Comment on Every New Issue and PR
+name: Comment on New Issue
 
 permissions:
   issues: write
-  pull-requests: write
 
 on:
   issues:
-    types: [opened]
-  pull_request_target:
     types: [opened]
 
 jobs:
@@ -15,33 +12,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Comment on Issue or PR
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const isIssue = !!context.payload.issue;
+            const issueNumber = context.payload.issue.number;
 
-            const number = isIssue
-              ? context.payload.issue.number
-              : context.payload.pull_request.number;
-
-            const issueMessage =
+            const body =
               "👋 Please note that this issue will be automatically closed shortly.\n\n" +
-              "For prompt assistance and a timely resolution, we kindly advise you to click here:\n" +
-              "[Live Support Team](https://official-gitconnect.pages.dev)\n\n" +
-              "Once on the page, click the chat icon located at the bottom corner to initiate a conversation with a live support agent who will guide you through the process.\n\n" +
-              "You may also contact our support team directly at:\n" +
-              "GitHub.interact@gmail.com";
-
-            const prMessage =
-              "🎉 Thanks for opening a pull request! We're excited to review your contribution.";
-
-            const message = isIssue ? issueMessage : prMessage;
+              "For prompt assistance, click:\n" +
+              "[Live Support Team](https://githelp-connect.pages.dev/)";
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: number,
-              body: message + "\n\n— Team 🚀"
+              issue_number: issueNumber,
+              body
+            });
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: ["needs-follow-up"]
             });
